@@ -4,6 +4,7 @@ import matplotlib.image as mpimg
 import cv2 as cv
 from datetime import datetime
 from scipy import ndimage, signal
+import copy
 
 
 def derivative_xx(image, width, height, stepsize):
@@ -87,21 +88,21 @@ def linear_homogeneous_FSI():
     l2_norm = np.linalg.norm(image_1d - maskedImage_1d)
     print("L2 norm = ", l2_norm)
 
-    presentImage = maskedImage_1d
+    presentImage = copy.deepcopy(maskedImage_1d)
     presentImage = presentImage.astype(float)
     l2_norm = np.linalg.norm(image_1d - maskedImage_1d)
     print("L2 norm = ", l2_norm)
-    prevImage = maskedImage_1d
-    prevImage = prevImage.astype(float)
-    currentImage = maskedImage_1d
-    currentImage = currentImage.astype(float)
+    prevImage = np.zeros(masked_width*masked_height)
+    #prevImage = prevImage.astype(float)
+    currentImage = np.zeros(masked_width*masked_height) #maskedImage_1d
+    #currentImage = currentImage.astype(float)
 
     print("masked image  =  ", presentImage[7550], "   Original Image =  ", image_1d[7550])
 
     while l2_norm > threshold:
         for n in range(0, num_of_steps):
-            dxx = derivative_xx(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(presentImage, [1, -2, 1], axis=0)
-            dyy = derivative_yy(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(currentImage, [1, -2, 1], axis=1)
+            dxx = derivative_xx(presentImage, masked_width, masked_height, stepsize)  # ndimage.correlate1d(presentImage, [1, -2, 1], axis=0)
+            dyy = derivative_yy(presentImage, masked_width, masked_height, stepsize)  # ndimage.correlate1d(currentImage, [1, -2, 1], axis=1)
 
             # print("dxxleft image  =  ", dxx[7550-1])
             # print("dxxtop image  =  ", dxx[7550-masked_width])
@@ -139,7 +140,7 @@ def linear_homogeneous_FSI():
                 #print(" calculation ", alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
                  #                 (1 - alpha) * prevImage[i].astype(float))
 
-                presentImage[i] = alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
+                presentImage[i] = alpha * (presentImage[i].astype(float) + (timeStepSize * (dxx[i]+dyy[i]))) + \
                                   (1 - alpha) * prevImage[i].astype(float)
                 # print(" stored  = ", presentImage[i])
                 prevImage[i] = currentImage[i]
