@@ -39,7 +39,7 @@ def derivative_yy(image, width, height, stepsize):
 
     for k in range(0, width):
         dyy[k] = (image[k + width] - image[k])
-        dyy[k + width * (height - 1)] = (image[(height - 2) * width + k] - image[k + width * (height - 1)])
+        dyy[(height - 1) * width + k ] = (image[(height - 2) * width + k] - image[k + width * (height - 1)])
     return dyy
 
 
@@ -61,15 +61,15 @@ def display_image(image):
 def linear_homogeneous_FSI():
     currentTime = datetime.now()
 
-    num_of_steps = 1
-    stepsize = 0.25
+    num_of_steps = 100
+    stepsize = 1
     threshold = 0.2
     image = read_image('pepper.png')
     mask_image = read_image('test_mask/pepper_mask_15percentage_of_random_pixels.png')
     pixel_locations = np.loadtxt('test_mask/pixel_locations', delimiter="\n", dtype=float).astype(int)
 
     print(pixel_locations)
-    timeStepSize = 0.5
+    timeStepSize = 0.25
     #finalImage = image - mask_image
     #width, height = finalImage.shape[0], finalImage.shape[1]
     #print(finalImage.shape)
@@ -90,7 +90,7 @@ def linear_homogeneous_FSI():
 
     print("masked image  =  ", presentImage[7550], "   Original Image =  ", image_1d[7550])
 
-    # while l2_norm > dxx:
+    # while l2_norm > threshold:
     for n in range(0, num_of_steps):
         dxx = derivative_xx(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(presentImage, [1, -2, 1], axis=0)
         dyy = derivative_yy(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(currentImage, [1, -2, 1], axis=1)
