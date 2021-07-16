@@ -93,9 +93,9 @@ def linear_homogeneous_FSI():
     l2_norm = np.linalg.norm(image_1d - maskedImage_1d)
     print("L2 norm = ", l2_norm)
     prevImage = np.zeros(masked_width*masked_height)
-    #prevImage = prevImage.astype(float)
+    prevImage = prevImage.astype(float)
     currentImage = np.zeros(masked_width*masked_height) #maskedImage_1d
-    #currentImage = currentImage.astype(float)
+    currentImage = currentImage.astype(float)
 
     print("masked image  =  ", presentImage[7550], "   Original Image =  ", image_1d[7550])
 
