@@ -35,7 +35,7 @@ def derivative_yy(image, width, height, stepsize):
     len = width * height
     dyy = np.ones(len)
     for i in range(width, len - width):
-        dyy[i] = (image[1 + width] - 2 * image[i] + image[1 - width])/(stepsize ** 2)
+        dyy[i] = (image[i + width] - 2 * image[i] + image[i - width])/(stepsize ** 2)
 
     for k in range(0, width):
         dyy[k] = (image[k + width] - image[k])
