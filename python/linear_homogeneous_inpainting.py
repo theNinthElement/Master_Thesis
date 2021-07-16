@@ -9,22 +9,22 @@ from scipy import ndimage, signal
 def derivative_xx(image, width, height, stepsize):
     #width, height = image.shape[0], image.shape[1]
     len = width * height
-    dxx = np.ones(len)
+    dxx = np.zeros(len)
 
 
     # out_array
     for i in range(1, len - 1):
         # print (" i  ", i, "  i+1+dlen  ", i+1+dlen, " i+dlen " , i+dlen, "  i-1+dlen  ", i-1+dlen )
-        dxx[i] = (image[i + 1] - 2 * image[i] + image[i - 1])/(stepsize ** 2)
+        dxx[i] = (image[i + 1] - 2 * image[i] + image[i - 1])/(stepsize * stepsize)
 
     for k in range(0, height):
         # print(" k * width+dlen  ", k * width+dlen, "  k * width+1+dlen ", \
         #             k * width+1+dlen, " k * width+dlen ", k * width+dlen)
-        dxx[k * width] = (image[k * width + 1] - image[k * width])
+        dxx[k * width] = (image[k * width + 1] - image[k * width])/(stepsize*stepsize)
 
         # print("(k+1) * width-1+dlen  ", (k+1) * width-1+dlen, " (k+1) * width-2+dlen ", \
         #           (k+1) * width-2+dlen, "(k+1) * width-1+dlen ", (k+1) * width-1+dlen)
-        dxx[(k + 1) * width - 1] = (image[(k + 1) * width - 2] - image[(k + 1) * width - 1])
+        dxx[(k + 1) * width - 1] = (image[(k + 1) * width - 2] - image[(k + 1) * width - 1])/(stepsize*stepsize)
 
         #print("-----------------------------------------------")
     return dxx
@@ -33,20 +33,19 @@ def derivative_xx(image, width, height, stepsize):
 def derivative_yy(image, width, height, stepsize):
     #width, height = image.shape[0], image.shape[1]
     len = width * height
-    dyy = np.ones(len)
+    dyy = np.zeros(len)
     for i in range(width, len - width):
-        dyy[i] = (image[i + width] - 2 * image[i] + image[i - width])/(stepsize ** 2)
+        dyy[i] = (image[i + width] - 2 * image[i] + image[i - width])/(stepsize * stepsize)
 
     for k in range(0, width):
-        dyy[k] = (image[k + width] - image[k])
-        dyy[(height - 1) * width + k ] = (image[(height - 2) * width + k] - image[k + width * (height - 1)])
+        dyy[k] = (image[k + width] - image[k])/(stepsize*stepsize)
+        dyy[(height - 1) * width + k ] = (image[(height - 2) * width + k] - image[(height - 1) * width + k ])/(stepsize*stepsize)
     return dyy
 
 
 def read_image(path):
     image = cv.imread(path, cv.IMREAD_GRAYSCALE)
     return image
-
 
 def display_image(image):
     fig, axs = plt.subplots()
@@ -61,11 +60,13 @@ def display_image(image):
 def linear_homogeneous_FSI():
     currentTime = datetime.now()
 
-    num_of_steps = 100
+    num_of_steps = 3
     stepsize = 1
-    threshold = 0.2
+    threshold = 0.0001
     image = read_image('pepper.png')
+    image = image.astype(float)
     mask_image = read_image('test_mask/pepper_mask_15percentage_of_random_pixels.png')
+    mask_image = mask_image.astype(float)
     pixel_locations = np.loadtxt('test_mask/pixel_locations', delimiter="\n", dtype=float).astype(int)
 
     print(pixel_locations)
@@ -79,14 +80,19 @@ def linear_homogeneous_FSI():
     masked_width, masked_height =  mask_image.shape[0], mask_image.shape[1]
 
     image_1d = image.reshape(original_width*original_height)
+    image_1d = image_1d.astype(float)
     maskedImage_1d = mask_image.reshape(masked_width*masked_height)
+    maskedImage_1d = maskedImage_1d.astype(float)
 
-    l2_norm = np.linalg.norm(image - mask_image)
+    l2_norm = np.linalg.norm(image_1d - maskedImage_1d)
     print("L2 norm = ", l2_norm)
 
     presentImage = maskedImage_1d
+    presentImage = presentImage.astype(float)
     prevImage = maskedImage_1d
+    prevImage = prevImage.astype(float)
     currentImage = maskedImage_1d
+    currentImage = currentImage.astype(float)
 
     print("masked image  =  ", presentImage[7550], "   Original Image =  ", image_1d[7550])
 
@@ -95,13 +101,13 @@ def linear_homogeneous_FSI():
         dxx = derivative_xx(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(presentImage, [1, -2, 1], axis=0)
         dyy = derivative_yy(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(currentImage, [1, -2, 1], axis=1)
 
-        print("dxxleft image  =  ", dxx[7550-1])
-        print("dxxtop image  =  ", dxx[7550-masked_width])
-        print("dxx image  =  ", dxx[7550])
-        print("dxxright image  =  ", dxx[7550 + 1])
-        print("dxxbottom image  =  ", dxx[7550 + masked_width])
+        # print("dxxleft image  =  ", dxx[7550-1])
+        # print("dxxtop image  =  ", dxx[7550-masked_width])
+        # print("dxx image  =  ", dxx[7550])
+        # print("dxxright image  =  ", dxx[7550 + 1])
+        # print("dxxbottom image  =  ", dxx[7550 + masked_width])
 
-        print("dyy image  =  ", dxx[7550])
+        # print("dyy image  =  ", dyy[7550])
 
         # print("calculated dxx and dyy")
         # display_image(dxx)
@@ -115,6 +121,8 @@ def linear_homogeneous_FSI():
         traceIndex = 0
         #print(masked_width*masked_height)
         for i in range (0, masked_width*masked_height-1):
+            #print("dxx image  =  ", dxx[i])
+            #print("dyy image  =  ", dxx[i])
             if n == 0:
                 prevImage[i] = presentImage[i]
 
@@ -126,8 +134,15 @@ def linear_homogeneous_FSI():
                 #print(traceIndex)
                 continue
 
-            presentImage[i] = alpha * (presentImage[i] + (timeStepSize * (dImage[i]))) + (1 - alpha) * prevImage[i]
+            #print(" calculation ", alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
+             #                 (1 - alpha) * prevImage[i].astype(float))
+
+            presentImage[i] = alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
+                              (1 - alpha) * prevImage[i].astype(float)
+            # print(" stored  = ", presentImage[i])
             prevImage[i] = currentImage[i]
+        l2_norm = np.linalg.norm(image_1d - presentImage)
+        print("L2 norm = ", l2_norm)
 
     print("masked image  =  ", presentImage[7550], "   Original Image =  ", image_1d[7550])
 
