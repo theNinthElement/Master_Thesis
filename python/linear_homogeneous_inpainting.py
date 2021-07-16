@@ -60,9 +60,9 @@ def display_image(image):
 def linear_homogeneous_FSI():
     currentTime = datetime.now()
 
-    num_of_steps = 3
+    num_of_steps = 40
     stepsize = 1
-    threshold = 0.0001
+    threshold = 0.1
     image = read_image('pepper.png')
     image = image.astype(float)
     mask_image = read_image('test_mask/pepper_mask_15percentage_of_random_pixels.png')
@@ -89,6 +89,8 @@ def linear_homogeneous_FSI():
 
     presentImage = maskedImage_1d
     presentImage = presentImage.astype(float)
+    l2_norm = np.linalg.norm(image_1d - maskedImage_1d)
+    print("L2 norm = ", l2_norm)
     prevImage = maskedImage_1d
     prevImage = prevImage.astype(float)
     currentImage = maskedImage_1d
@@ -96,51 +98,51 @@ def linear_homogeneous_FSI():
 
     print("masked image  =  ", presentImage[7550], "   Original Image =  ", image_1d[7550])
 
-    # while l2_norm > threshold:
-    for n in range(0, num_of_steps):
-        dxx = derivative_xx(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(presentImage, [1, -2, 1], axis=0)
-        dyy = derivative_yy(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(currentImage, [1, -2, 1], axis=1)
+    while l2_norm > threshold:
+        for n in range(0, num_of_steps):
+            dxx = derivative_xx(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(presentImage, [1, -2, 1], axis=0)
+            dyy = derivative_yy(maskedImage_1d, masked_width, masked_height, stepsize)  # ndimage.correlate1d(currentImage, [1, -2, 1], axis=1)
 
-        # print("dxxleft image  =  ", dxx[7550-1])
-        # print("dxxtop image  =  ", dxx[7550-masked_width])
-        # print("dxx image  =  ", dxx[7550])
-        # print("dxxright image  =  ", dxx[7550 + 1])
-        # print("dxxbottom image  =  ", dxx[7550 + masked_width])
+            # print("dxxleft image  =  ", dxx[7550-1])
+            # print("dxxtop image  =  ", dxx[7550-masked_width])
+            # print("dxx image  =  ", dxx[7550])
+            # print("dxxright image  =  ", dxx[7550 + 1])
+            # print("dxxbottom image  =  ", dxx[7550 + masked_width])
 
-        # print("dyy image  =  ", dyy[7550])
+            # print("dyy image  =  ", dyy[7550])
 
-        # print("calculated dxx and dyy")
-        # display_image(dxx)
-        # display_image(dyy)
-        # dImage = np.hypot(dxx, dyy)
-        dImage = (dxx + dyy)
-        # print("Dimages  = ", ((dImageOld - dImage) ** 2).mean())
-        # display_image(dImage)
-        alpha = (4 * n + 2) / (2 * n + 3)
-        #print(alpha)
-        traceIndex = 0
-        #print(masked_width*masked_height)
-        for i in range (0, masked_width*masked_height-1):
-            #print("dxx image  =  ", dxx[i])
-            #print("dyy image  =  ", dxx[i])
-            if n == 0:
-                prevImage[i] = presentImage[i]
+            # print("calculated dxx and dyy")
+            # display_image(dxx)
+            # display_image(dyy)
+            # dImage = np.hypot(dxx, dyy)
+            dImage = (dxx + dyy)
+            # print("Dimages  = ", ((dImageOld - dImage) ** 2).mean())
+            # display_image(dImage)
+            alpha = (4 * n + 2) / (2 * n + 3)
+            #print(alpha)
+            traceIndex = 0
+            #print(masked_width*masked_height)
+            for i in range (0, masked_width*masked_height-1):
+                #print("dxx image  =  ", dxx[i])
+                #print("dyy image  =  ", dxx[i])
+                if n == 0:
+                    prevImage[i] = presentImage[i]
 
-            currentImage[i] = presentImage[i]
+                currentImage[i] = presentImage[i]
 
-            if (i == pixel_locations[traceIndex]):
-                #print("here at ", traceIndex)
-                traceIndex+=1
-                #print(traceIndex)
-                continue
+                if (i == pixel_locations[traceIndex]):
+                    #print("here at ", traceIndex)
+                    traceIndex+=1
+                    #print(traceIndex)
+                    continue
 
-            #print(" calculation ", alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
-             #                 (1 - alpha) * prevImage[i].astype(float))
+                #print(" calculation ", alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
+                 #                 (1 - alpha) * prevImage[i].astype(float))
 
-            presentImage[i] = alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
-                              (1 - alpha) * prevImage[i].astype(float)
-            # print(" stored  = ", presentImage[i])
-            prevImage[i] = currentImage[i]
+                presentImage[i] = alpha * (presentImage[i].astype(float) + (timeStepSize * (dImage[i].astype(float)))) + \
+                                  (1 - alpha) * prevImage[i].astype(float)
+                # print(" stored  = ", presentImage[i])
+                prevImage[i] = currentImage[i]
         l2_norm = np.linalg.norm(image_1d - presentImage)
         print("L2 norm = ", l2_norm)
 
