@@ -11,8 +11,6 @@ def derivative_xx(image, width, height, stepsize):
     #width, height = image.shape[0], image.shape[1]
     len = width * height
     dxx = np.zeros(len)
-
-
     # out_array
     for i in range(1, len - 1):
         # print (" i  ", i, "  i+1+dlen  ", i+1+dlen, " i+dlen " , i+dlen, "  i-1+dlen  ", i-1+dlen )
@@ -63,7 +61,7 @@ def linear_homogeneous_FSI():
 
     num_of_steps = 40
     stepsize = 1
-    threshold = 0.1
+    threshold = 0.5
     image = read_image('pepper.png')
     image = image.astype(float)
     mask_image = read_image('test_mask/pepper_mask_15percentage_of_random_pixels.png')
@@ -144,7 +142,7 @@ def linear_homogeneous_FSI():
                                   (1 - alpha) * prevImage[i].astype(float)
                 # print(" stored  = ", presentImage[i])
                 prevImage[i] = currentImage[i]
-        l2_norm = np.linalg.norm(image_1d - presentImage)
+        l2_norm = np.linalg.norm(presentImage - currentImage)
         print("L2 norm = ", l2_norm)
 
     print("masked image  =  ", presentImage[7550], "   Original Image =  ", image_1d[7550])
@@ -171,21 +169,34 @@ def EED_FSI():
     finalImage = image - mask_image
     presentImage = finalImage
 
-    t = np.linspace(-10, 10, 30)
-    bump = np.exp(-0.1 * t ** 2)
-    bump /= np.trapz(bump)  # normalize the integral to 1
-    # make a 2-D kernel out of it
-    kernel = bump[:, np.newaxis] * bump[np.newaxis, :]
+    # converting to 1d
+    original_width, original_height = image.shape[0], image.shape[1]
+    masked_width, masked_height = mask_image.shape[0], mask_image.shape[1]
+
+    image_1d = image.reshape(original_width * original_height)
+    image_1d = image_1d.astype(float)
+    maskedImage_1d = mask_image.reshape(masked_width * masked_height)
+    maskedImage_1d = maskedImage_1d.astype(float)
+
+    presentImage = maskedImage_1d
+
+    # t = np.linspace(-10, 10, 30)
+    # bump = np.exp(-0.1 * t ** 2)
+    # bump /= np.trapz(bump)  # normalize the integral to 1
+    # make a 1-D kernel out of it
+    kernel = ndimage.gaussian_filter1d(np.float_([0, 1, 0]), 1) #bump[:, np.newaxis] * bump[np.newaxis, :]
 
     # u_sigma = signal.fftconvolve(finalImage, kernel[:,:,np.newaxis], mode='same')
-    width, height = u_sigma.shape[0], u_sigma.shape[1]
+    # width, height = u_sigma.shape[0], u_sigma.shape[1]
 
-    presentImage = u_sigma
-    prevImage = np.identity(width)
-    currentImage = u_sigma
+    #presentImage = u_sigma
+    #prevImage = np.identity(width)
+    #currentImage = u_sigma
+
+
     for n in range(0, num_of_steps):
-        u_sigma = signal.fftconvolve(finalImage, kernel[:, :, np.newaxis], mode='same')
-        dxx_gaussian = ndimage.correlate1d(u_sigma, [1, -2, 1], axis=0)  # derivative_xx(finalImage)
+        # u_sigma = signal.fftconvolve(finalImage, kernel[:, :, np.newaxis], mode='same')
+        dxx_gaussian = ndimage.correlate1d(presentImage, kernel, axis=0)  # derivative_xx(finalImage)
         dyy_gaussian = ndimage.correlate1d(u_sigma, [1, -2, 1], axis=1)  # derivative_yy(finalImage)
         dxx = ndimage.correlate1d(finalImage, [1, -2, 1], axis=0)  # derivative_xx(finalImage)
         dyy = ndimage.correlate1d(finalImage, [1, -2, 1], axis=1)  # derivative_yy(finalImage)
