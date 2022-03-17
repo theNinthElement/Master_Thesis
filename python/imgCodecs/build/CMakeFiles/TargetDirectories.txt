@@ -1,0 +1,4 @@
+/home/anirban/worksapce/Master_Thesis/python/imgCodecs/build/CMakeFiles/imgCodecs.dir
+/home/anirban/worksapce/Master_Thesis/python/imgCodecs/build/CMakeFiles/edit_cache.dir
+/home/anirban/worksapce/Master_Thesis/python/imgCodecs/build/CMakeFiles/rebuild_cache.dir
+/home/anirban/worksapce/Master_Thesis/python/imgCodecs/build/CMakeFiles/imgCodecs_autogen.dir

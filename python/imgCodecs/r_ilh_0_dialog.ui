@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>R_ILH_0_Dialog</class>
+ <widget class="QDialog" name="R_ILH_0_Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1196</width>
+    <height>991</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>R-ILH-0 Decompression</string>
+  </property>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
