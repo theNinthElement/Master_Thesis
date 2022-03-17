@@ -1,4 +1,1 @@
 
-[submodule "python/imgCodecs"]
-	path = python/imgCodecs
-	url = https://github.com/MedVisBonn/imgCodecs.git
