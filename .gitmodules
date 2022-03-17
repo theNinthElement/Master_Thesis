@@ -2,3 +2,6 @@
 	path = extern/pybind11
 	url = ../../pybind/pybind11
 	branch = stable
+[submodule "imgCodecs"]
+	path = imgCodecs
+	url = https://github.com/MedVisBonn/imgCodecs.git
