@@ -48,6 +48,7 @@ private:
     QImage  *imageObject;
     QImage  *maskImageObject;
     QStringList randPxlStrArr;
+    QStringList *randPxlStrArr4D;
     nifti_image *nim_input, *nim_input_mask, *nim_input_refer, *nim_input_brain_mask;
 };
 

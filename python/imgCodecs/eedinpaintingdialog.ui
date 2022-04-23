@@ -120,6 +120,38 @@
        </layout>
       </item>
       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <item>
+         <widget class="QLabel" name="label_eedInpaintFSITemporalDiffusion">
+          <property name="text">
+           <string>Temporal Diffusion</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_EEDTemporalDiffusion"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <item>
+         <widget class="QLabel" name="label_EEDBetaValue">
+          <property name="text">
+           <string>Beta Value</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_EED4DBetaValue">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_eedInpaintUplImg">
         <property name="text">
          <string>Load Image Data</string>
@@ -130,6 +162,13 @@
        <widget class="QPushButton" name="pushButton_eedInpaintUplMask">
         <property name="text">
          <string>Load Mask Data</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_eedInpaintUplRefImg">
+        <property name="text">
+         <string>Load Ref Data</string>
         </property>
        </widget>
       </item>
@@ -151,6 +190,13 @@
        <widget class="QCheckBox" name="checkBox_EEDInpaintMonitoring">
         <property name="text">
          <string>Monitoring</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_EED3Dto4D">
+        <property name="text">
+         <string>Require Ref data</string>
         </property>
        </widget>
       </item>

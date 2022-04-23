@@ -34,6 +34,10 @@ EEDInpaintingDialog::EEDInpaintingDialog(QWidget *parent) :
     ui->lineEdit_eedInpaintInnerFEDCycSize->setValidator(new QIntValidator(0, 999999999, this));
     // The FSI Inner Loop lineedit will only accept integers between 0 and 999999999
     ui->lineEdit_EEDInpaintFSILoopSoze->setValidator(new QIntValidator(0, 999999999, this));
+    // The FSI Inner Loop lineedit will only accept integers between 0 and 999999999
+    ui->lineEdit_EED4DBetaValue->setValidator(new QDoubleValidator(0, 999999999, 10, this));
+    ui->lineEdit_EEDTemporalDiffusion->setValidator(new QDoubleValidator(0, 999999999, 10, this));
+
 
     //Make the displayed images center of the label
     ui->label_eedInpaintImg->setAlignment(Qt::AlignCenter);
@@ -53,6 +57,8 @@ EEDInpaintingDialog::EEDInpaintingDialog(QWidget *parent) :
     ui->lineEdit_eedInpaintInnerFEDCycSize->setPlaceholderText("20");
     ui->lineEdit_eedInpaintTol->setPlaceholderText("0.00001");
     ui->lineEdit_eedInpaintMSETol->setPlaceholderText("100");
+    ui->lineEdit_EED4DBetaValue->setPlaceholderText("0.1");
+    ui->lineEdit_EEDTemporalDiffusion->setPlaceholderText("0.1");
 }
 
 EEDInpaintingDialog::~EEDInpaintingDialog()
@@ -69,6 +75,11 @@ void EEDInpaintingDialog::on_radioButton_eedInpaintExplitScheme_clicked()
     ui->label_eedInpaintInnerFEDCycSize->setVisible(false);
     ui->lineEdit_eedInpaintMSETol->setVisible(false);
     ui->label_eedInpaintMSETol->setVisible(false);
+    ui->lineEdit_EED4DBetaValue->setVisible(false);
+    ui->label_EEDBetaValue->setVisible(false);
+    ui->lineEdit_EEDTemporalDiffusion->setVisible(false);
+    ui->label_eedInpaintFSITemporalDiffusion->setVisible(false);
+
 
     ui->lineEdit_eedInpaintTol->setVisible(true);
     ui->label_eedInpaintTol->setVisible(true);
@@ -85,6 +96,10 @@ void EEDInpaintingDialog::on_radioButton_eedInpaintFED_clicked()
     ui->label_eedInpaintMSETol->setVisible(true);
     ui->lineEdit_eedInpaintInnerFEDCycSize->setVisible(true);
     ui->label_eedInpaintInnerFEDCycSize->setVisible(true);
+    ui->lineEdit_EED4DBetaValue->setVisible(false);
+    ui->label_EEDBetaValue->setVisible(false);
+    ui->lineEdit_EEDTemporalDiffusion->setVisible(false);
+    ui->label_eedInpaintFSITemporalDiffusion->setVisible(false);
 }
 
 void EEDInpaintingDialog::on_radioButton_eedInpaintFSI_clicked()
@@ -98,6 +113,10 @@ void EEDInpaintingDialog::on_radioButton_eedInpaintFSI_clicked()
     ui->label_eedInpaintTol->setVisible(true);
     ui->lineEdit_EEDInpaintFSILoopSoze->setVisible(true);
     ui->label_eedInpaintFSILoopSize->setVisible(true);
+    ui->lineEdit_EED4DBetaValue->setVisible(true);
+    ui->label_EEDBetaValue->setVisible(true);
+    ui->lineEdit_EEDTemporalDiffusion->setVisible(true);
+    ui->label_eedInpaintFSITemporalDiffusion->setVisible(true);
 }
 
 void EEDInpaintingDialog::on_pushButton_eedInpaintUplImg_clicked()
@@ -133,6 +152,41 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintUplImg_clicked()
     ui->label_eedInpaintImg->setPixmap(image.scaled(ui->label_eedInpaintImg->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));  //Fit image size to label size
 //    ui->label_randMask_origImg->setPixmap(imageMask);
 }
+
+void EEDInpaintingDialog::on_pushButton_eedInpaintUplRefImg_clicked()
+{
+    QString imageDataPath = QFileDialog::getOpenFileName(this,tr("Open File"),"",tr("NIfTI (*.nii)" ));
+
+    //***************************************************
+    //Convert QString to char*
+    QByteArray baTemp = imageDataPath.toLocal8Bit();
+    const char *fin = baTemp.data();
+    //***************************************************
+    // Read input dataset, including data
+    nim_input_ref = nifti_image_read(fin, 1);
+    if(!nim_input_ref) {
+        fprintf(stderr,"Failed to read NIfTI image data from '%s'\n", fin);
+        return;
+    }
+    //***************************************************
+    int imgWidth = nim_input_ref->dim[1];
+    int imgHeight = nim_input_ref->dim[2];
+//    int imgDepth = nim_input->dim[3];
+    int imgTimeLen = nim_input_ref->dim[4];
+//    int dataDim = ui->comboBox_randMask->currentIndex();
+
+    unsigned char* niiImgArr = nii_to_ucharArray(nim_input_ref);
+    // Create image and set to the label
+    imageObject = new QImage(niiImgArr, imgWidth, imgHeight, QImage::Format_Indexed8);
+    if(imgTimeLen != 1) {
+        QMessageBox::warning(this, "Image Dimension Problem", "Unfortunately, 4D data does not fit yet!");
+        return;
+    }
+    image = QPixmap::fromImage(*imageObject);
+    ui->label_eedInpaintImg->setPixmap(image.scaled(ui->label_eedInpaintImg->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));  //Fit image size to label size
+//    ui->label_randMask_origImg->setPixmap(imageMask);
+}
+
 
 void EEDInpaintingDialog::on_pushButton_eedInpaintUplMask_clicked()
 {
@@ -241,10 +295,14 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintUplMask_clicked()
 void EEDInpaintingDialog::on_pushButton_eedInpaintRun_clicked()
 {
     int innerLoopSize, innerCycleSize;
-    float timeStep, tol;
+    float timeStep, tol, temporalDiffusion = 100;
     bool zeros2mask = false;
     bool loadEigenInfo = false;
+    bool loadRefImage = false;
     double **eigenVals, ***eigenVecs;
+
+    float beta = 0;
+
 
     loadEigenInfo = ui->checkBox_load_eigenInfo->isChecked();
     qDebug() << "Eingen Information loaded: " << loadEigenInfo;
@@ -253,6 +311,12 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintRun_clicked()
         zeros2mask = true;
     }
     qDebug() << "Are zeros included: " << zeros2mask;
+
+    if(ui->checkBox_EED3Dto4D->isChecked()) {
+        loadRefImage = true;
+    }
+    qDebug() << "Ref Image to be used " << zeros2mask;
+
 
     if(ui->radioButton_eedInpaintExplitScheme->isChecked()) {
         if(ui->lineEdit_eedInpaintTol->text().isEmpty() || ui->lineEdit_eedInpaintTimeStep->text().isEmpty() || ui->label_eedInpaintImg->pixmap()==0 //.isNull()
@@ -362,6 +426,15 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintRun_clicked()
     } else if(ui->radioButton_eedInpaintFSI->isChecked()) {
         qDebug() << "FSI Scheme\n";
 
+        if(!ui->lineEdit_EED4DBetaValue->text().isEmpty()) {
+            beta = (ui->lineEdit_EED4DBetaValue->text()).toFloat();
+        }
+
+        if(!ui->lineEdit_EEDTemporalDiffusion->text().isEmpty()) {
+            temporalDiffusion = (ui->lineEdit_EEDTemporalDiffusion->text()).toFloat();
+        }
+
+
         if(ui->lineEdit_eedInpaintTimeStep->text().isEmpty() || ui->lineEdit_eedInpaintTol->text().isEmpty() || ui->lineEdit_EEDInpaintFSILoopSoze->text().isEmpty() || ui->label_eedInpaintImg->pixmap()==0 //.isNull()
                 || ui->label_eedInpaintMaskImg->pixmap()==0) //.isNull())
         {
@@ -371,7 +444,7 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintRun_clicked()
             tol = (ui->lineEdit_eedInpaintTol->text()).toDouble();
             innerLoopSize = (ui->lineEdit_EEDInpaintFSILoopSoze->text()).toDouble();
 
-            double *imageArr, *scatImageArr, *dtiImageArr;
+            double *imageArr, *scatImageArr, *dtiImageArr, *refImageArr;
             int imgWidth = nim_input->dim[1], imgHeight = nim_input->dim[2], imgDepth = nim_input->dim[3];
             float gridSpcX = nim_input->dx, gridSpcY = nim_input->dy, gridSpcZ = nim_input->dz, gridSpcT = nim_input->dt;
 
@@ -418,6 +491,7 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintRun_clicked()
 
             imageArr = nii_to_array(nim_input);
             scatImageArr = nii_to_array(nim_input_mask);
+            refImageArr = nii_to_array(nim_input_ref);
 //            if(nim_dti) {
 //                dtiImageArr = nii_to_array(nim_dti);
 //            }
@@ -429,40 +503,6 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintRun_clicked()
                 if(imgDepth == 1) {
                     eed_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, randPxls, imgWidth, imgHeight);
                 } else {
-
-//                    qDebug() << "Slope and Inter: " << nim_input->scl_slope << nim_input->scl_inter << nim_input->byteorder << nim_input->datatype;
-//                    qDebug() << "S form code and Q form code: " << nim_input->sform_code << nim_input->qform_code;
-
-//                    //*********************************************************************************************************************************************************************
-//                    int randArrTraceIndex = 0;
-//                    double* nthPrimeRes = new double[sizeof(double) * imgWidth*imgHeight*imgDepth];
-//                    for(int i=0; i<imgWidth*imgHeight*imgDepth; i++) {
-//                        if(i == randPxls[randArrTraceIndex]) {
-//                            nthPrimeRes[randArrTraceIndex] = imageArr[i];
-//                            imageArr[i] = scatImageArr[i];
-//                            randArrTraceIndex++;
-//                            continue;
-//                        }
-//                    }
-//                    QDir dir("./img-outputs/");
-//                    if (!dir.exists())
-//                        dir.mkpath(".");
-//                    QFile file("./img-outputs/res_locations");
-//                    if(!file.open(QFile::WriteOnly | QFile::Text)) {
-//                        QMessageBox::warning(this, "Error", "File is NOT open");
-//                    }
-//                    QByteArray temp;
-//                    for(int i=0; i<randArrTraceIndex; i++) {                                 // Randomly choosen X percent of pixels are used to create scattered image
-//                        int ind = nthPrimeRes[i];
-//                        char buf[7];
-//                        ::sprintf(buf, "%d", ind);
-//                        temp.append(buf);
-//                        temp.append("\n");
-//                    }
-//                    file.write(temp);
-//                    file.flush();
-//                    file.close();
-//                    //*********************************************************************************************************************************************************************
                     qDebug() << gridSpcX << gridSpcY << gridSpcZ << gridSpcT;
                     qDebug() << imgWidth << imgHeight << imgDepth;
 
@@ -472,13 +512,31 @@ void EEDInpaintingDialog::on_pushButton_eedInpaintRun_clicked()
 
                         qDebug() << "DTI EED: \n";
                         dti_eed_3d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, randPxls, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ, zeros2mask, eigenVals, eigenVecs);
-                    } else {
+                    } else if(loadRefImage) {
+                        if(temporalDiffusion!=100)
+                        {
+                            qDebug() << "We are at feed_3d_with_temporal_inpainting_FSI";
+                            eed_3d_with_temporal_inpainting_FSI(tol, timeStep, temporalDiffusion, innerLoopSize, scatImageArr, imageArr, refImageArr, randPxls, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ, zeros2mask, beta);
+
+                        } else if(beta>0)
+                        {
+                            qDebug() << "We are at fluctuating_DT_eed_3d_to_4d_inpainting_FSI";
+                            fluctuating_DT_eed_3d_to_4d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, refImageArr, randPxls, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ, zeros2mask, beta);
+
+                        } else {
+                            qDebug() << "We are at eed_3d_to_4d_inpainting_FSI";
+//                          eed_3d_to_4d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, refImageArr, randPxls, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ, zeros2mask);
+                            eed_3d_to_4d_old_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, refImageArr, randPxls, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ, zeros2mask);
+                        }
+                    }
+                    else {
                         qDebug() << "3D EED_FSI\n";
 
 //                        double **sturTen, **diffTen;
 //                        eed_3d_tensor(sturTen, diffTen, imageArr, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ);
 
                         eed_3d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, randPxls, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ, zeros2mask);
+
                     }
 
 //                    linfod_3d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, randPxls, imgWidth, imgHeight, imgDepth);

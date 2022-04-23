@@ -30,6 +30,8 @@ FOEEDInpaintingDialog::FOEEDInpaintingDialog(QWidget *parent) :
     ui->lineEdit_foeedInpt_FEDinnerCycle->setValidator(new QIntValidator(0, 999999999, this));
     // The FSI Inner Loop lineedit will only accept integers between 0 and 999999999
     ui->lineEdit_foeedInpt_FSIInnerLoopSize->setValidator(new QIntValidator(0, 999999999, this));
+    // The FSI Inner Loop lineedit will only accept integers between 0 and 999999999
+    ui->lineEdit_foeedInpt_TemporalDiffusion->setValidator(new QIntValidator(0, 999999999, this));
 
     //Make the displayed images center of the label
     ui->label_foeedInpt_imgDisplay->setAlignment(Qt::AlignCenter);
@@ -41,6 +43,10 @@ FOEEDInpaintingDialog::FOEEDInpaintingDialog(QWidget *parent) :
     ui->lineEdit_foeedInpt_mseTol->setVisible(false);
     ui->label_foeedInpt_FEDinnerCycle->setVisible(false);
     ui->lineEdit_foeedInpt_FEDinnerCycle->setVisible(false);
+    ui->label_foeedInpt_TD->setVisible(false);
+    ui->lineEdit_foeedInpt_TemporalDiffusion->setVisible(false);
+    ui->label_foeedInpt_TD->setVisible(true);
+    ui->lineEdit_foeedInpt_TemporalDiffusion->setVisible(true);
 
     //Set default value
     ui->lineEdit_foeedInpt_timeStep->setPlaceholderText("0.01");
@@ -49,6 +55,7 @@ FOEEDInpaintingDialog::FOEEDInpaintingDialog(QWidget *parent) :
     ui->lineEdit_foeedInpt_FEDinnerCycle->setPlaceholderText("20");
     ui->lineEdit_foeedInpt_tol->setPlaceholderText("0.0001");
     ui->lineEdit_foeedInpt_mseTol->setPlaceholderText("100");
+    ui->lineEdit_foeedInpt_TemporalDiffusion->setPlaceholderText("1");
 }
 
 FOEEDInpaintingDialog::~FOEEDInpaintingDialog()
@@ -65,6 +72,8 @@ void FOEEDInpaintingDialog::on_radioButton_foeedInpt_ExplicitScheme_clicked()
     ui->label_foeedInpt_FEDinnerCycle->setVisible(false);
     ui->lineEdit_foeedInpt_mseTol->setVisible(false);
     ui->label_foeedInpt_mseTol->setVisible(false);
+    ui->label_foeedInpt_TD->setVisible(false);
+    ui->lineEdit_foeedInpt_TemporalDiffusion->setVisible(false);
 
     ui->lineEdit_foeedInpt_tol->setVisible(true);
     ui->label_foeedInpt_Tol->setVisible(true);
@@ -76,6 +85,8 @@ void FOEEDInpaintingDialog::on_radioButton_foeedInpt_FEDScheme_clicked()
     ui->label_foeedInpt_Tol->setVisible(false);
     ui->lineEdit_foeedInpt_FSIInnerLoopSize->setVisible(false);
     ui->label_foeedInpt_FSIinnerLoopSize->setVisible(false);
+    ui->label_foeedInpt_TD->setVisible(false);
+    ui->lineEdit_foeedInpt_TemporalDiffusion->setVisible(false);
 
     ui->lineEdit_foeedInpt_mseTol->setVisible(true);
     ui->label_foeedInpt_mseTol->setVisible(true);
@@ -94,6 +105,8 @@ void FOEEDInpaintingDialog::on_radioButton_foeedInpt_FSISceheme_clicked()
     ui->label_foeedInpt_Tol->setVisible(true);
     ui->lineEdit_foeedInpt_FSIInnerLoopSize->setVisible(true);
     ui->label_foeedInpt_FSIinnerLoopSize->setVisible(true);
+    ui->label_foeedInpt_TD->setVisible(true);
+    ui->lineEdit_foeedInpt_TemporalDiffusion->setVisible(true);
 }
 
 void FOEEDInpaintingDialog::on_pushButton_foeedInpt_origDataLoad_clicked()
@@ -119,6 +132,72 @@ void FOEEDInpaintingDialog::on_pushButton_foeedInpt_origDataLoad_clicked()
 //    int dataDim = ui->comboBox_randMask->currentIndex();
 
     unsigned char* niiImgArr = nii_to_ucharArray(nim_input);
+    // Create image and set to the label
+    imageObject = new QImage(niiImgArr, imgWidth, imgHeight, QImage::Format_Indexed8);
+    if(imgTimeLen != 1) {
+        QMessageBox::warning(this, "Image Dimension Problem", "Unfortunately, 4D data does not fit yet!");
+        return;
+    }
+//    image = QPixmap::fromImage(*imageObject);
+//    ui->label_foeedInpt_imgDisplay->setPixmap(image.scaled(ui->label_foeedInpt_imgDisplay->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));  //Fit image size to label size
+}
+
+void FOEEDInpaintingDialog::on_pushButton_foeedInpt_loadRefData_clicked()
+{
+    QString imageDataPath = QFileDialog::getOpenFileName(this,tr("Open File"),"",tr("NIfTI (*.nii)" ));
+
+    //***************************************************
+    //Convert QString to char*
+    QByteArray baTemp = imageDataPath.toLocal8Bit();
+    const char *fin = baTemp.data();
+    //***************************************************
+    // Read input dataset, including data
+    nim_input_ref = nifti_image_read(fin, 1);
+    if(!nim_input_ref) {
+        fprintf(stderr,"Failed to read NIfTI image data from '%s'\n", fin);
+        return;
+    }
+    //***************************************************
+    int imgWidth = nim_input_ref->dim[1];
+    int imgHeight = nim_input_ref->dim[2];
+//    int imgDepth = nim_input->dim[3];
+    int imgTimeLen = nim_input_ref->dim[4];
+//    int dataDim = ui->comboBox_randMask->currentIndex();
+
+    unsigned char* niiImgArr = nii_to_ucharArray(nim_input);
+    // Create image and set to the label
+    imageObject = new QImage(niiImgArr, imgWidth, imgHeight, QImage::Format_Indexed8);
+    if(imgTimeLen != 1) {
+        QMessageBox::warning(this, "Image Dimension Problem", "Unfortunately, 4D data does not fit yet!");
+        return;
+    }
+    image = QPixmap::fromImage(*imageObject);
+    ui->label_foeedInpt_imgDisplay->setPixmap(image.scaled(ui->label_foeedInpt_imgDisplay->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));  //Fit image size to label size
+}
+
+void FOEEDInpaintingDialog::on_pushButton_foeedInpt_loadRefData_2_clicked()
+{
+    QString imageDataPath = QFileDialog::getOpenFileName(this,tr("Open File"),"",tr("NIfTI (*.nii)" ));
+
+    //***************************************************
+    //Convert QString to char*
+    QByteArray baTemp = imageDataPath.toLocal8Bit();
+    const char *fin = baTemp.data();
+    //***************************************************
+    // Read input dataset, including data
+    nim_input_ref2 = nifti_image_read(fin, 1);
+    if(!nim_input_ref2) {
+        fprintf(stderr,"Failed to read NIfTI image data from '%s'\n", fin);
+        return;
+    }
+    //***************************************************
+    int imgWidth = nim_input_ref2->dim[1];
+    int imgHeight = nim_input_ref2->dim[2];
+//    int imgDepth = nim_input->dim[3];
+    int imgTimeLen = nim_input_ref2->dim[4];
+//    int dataDim = ui->comboBox_randMask->currentIndex();
+
+    unsigned char* niiImgArr = nii_to_ucharArray(nim_input_ref2);
     // Create image and set to the label
     imageObject = new QImage(niiImgArr, imgWidth, imgHeight, QImage::Format_Indexed8);
     if(imgTimeLen != 1) {
@@ -174,11 +253,15 @@ void FOEEDInpaintingDialog::on_pushButton_foeedInpt_loadMaskData_clicked()
 void FOEEDInpaintingDialog::on_pushButton_foeedInpt_run_clicked()
 {
     int innerLoopSize, innerCycleSize;
-    float timeStep, tol;
+    float timeStep, tol, temporalDiffusion;
     bool zeros2mask = false;
+    bool loadRefImage = false;
 
     if(ui->checkBox_foeedIntp_zeros2mask->isChecked()) {
         zeros2mask = true;
+    }
+    if(ui->checkBox_foeedInpt_refImageRequired->isChecked()) {
+        loadRefImage = true;
     }
 
     if(ui->radioButton_foeedInpt_ExplicitScheme->isChecked()) {
@@ -297,12 +380,16 @@ void FOEEDInpaintingDialog::on_pushButton_foeedInpt_run_clicked()
             tol = (ui->lineEdit_foeedInpt_tol->text()).toDouble();
             innerLoopSize = (ui->lineEdit_foeedInpt_FSIInnerLoopSize->text()).toDouble();
 
-            double *imageArr, *scatImageArr;
+            double *imageArr, *scatImageArr, *refImage, *refImage2;
             int imgWidth = nim_input->dim[1], imgHeight = nim_input->dim[2], imgDepth = nim_input->dim[3];
             float gridSpcX = nim_input->dx, gridSpcY = nim_input->dy, gridSpcZ = nim_input->dz, gridSpcT = nim_input->dt;
 
             // Decleartion and memory allocation
             int* randPxls = new int[sizeof(int) * (randPxlStrArr.size()-1)];
+
+            if(!ui->lineEdit_foeedInpt_TemporalDiffusion->text().isEmpty()) {
+                temporalDiffusion = (ui->lineEdit_foeedInpt_TemporalDiffusion->text()).toDouble();
+            }
 
             for(int i=0; i<randPxlStrArr.size()-1; i++) {
                 QString temp = randPxlStrArr[i];
@@ -310,6 +397,8 @@ void FOEEDInpaintingDialog::on_pushButton_foeedInpt_run_clicked()
             }
             imageArr = nii_to_array(nim_input);
             scatImageArr = nii_to_array(nim_input_mask);
+            refImage = nii_to_array(nim_input_ref);
+            refImage2 = nii_to_array(nim_input_ref2);
 
             if(ui->checkBox_foeedInpt_monitor->isChecked()) {
 //                QMessageBox::information(this, "Monitoring", "Monitoring for FSI Scheme has not been implemented yet :(");
@@ -1144,6 +1233,10 @@ void FOEEDInpaintingDialog::on_pushButton_foeedInpt_run_clicked()
                 if(imgDepth == 1) {
 //                    eed_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, randPxls, imgWidth, imgHeight);
                     return;
+                } if(loadRefImage)
+                {
+                     qDebug() << "foeed_3d_with_temporal_data_inpainting_FSI\n";
+                     foeed_3d_with_temporal_data_inpainting_FSI(tol, timeStep, temporalDiffusion, innerLoopSize, scatImageArr, imageArr, refImage, refImage2, randPxls, imgWidth, imgHeight, imgDepth, zeros2mask);
                 } else {
                     qDebug() << "3D FOEED_FSI\n";
                     qDebug() << gridSpcX << gridSpcY << gridSpcZ << gridSpcT;
@@ -1168,6 +1261,8 @@ void FOEEDInpaintingDialog::on_pushButton_foeedInpt_run_clicked()
             imageArr = NULL;
             delete [] scatImageArr;
             scatImageArr = NULL;
+            delete[] refImage;
+            refImage = NULL;
 
             QMessageBox::information(this, "Finished running", "The code has run succesfully!");
         }

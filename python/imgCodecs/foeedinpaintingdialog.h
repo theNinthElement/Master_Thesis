@@ -25,6 +25,10 @@ private Q_SLOTS:
 
     void on_pushButton_foeedInpt_origDataLoad_clicked();
 
+    void on_pushButton_foeedInpt_loadRefData_clicked();
+
+    void on_pushButton_foeedInpt_loadRefData_2_clicked();
+
     void on_pushButton_foeedInpt_loadMaskData_clicked();
 
     void on_pushButton_foeedInpt_run_clicked();
@@ -38,7 +42,7 @@ private:
     QImage  *imageObject;
     QImage  *maskImageObject;
     QStringList randPxlStrArr;
-    nifti_image *nim_input, *nim_input_mask;
+    nifti_image *nim_input, *nim_input_mask, *nim_input_ref, *nim_input_ref2 ;
 };
 
 #endif // FOEEDINPAINTINGDIALOG_H

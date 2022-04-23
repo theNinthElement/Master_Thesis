@@ -65,6 +65,10 @@ void RegGridMaskDialog::on_pushButton_regMask_imgUpl_clicked()
     int imgTimeLen = nim_input_reg->dim[4];
 //    int dataDim = ui->comboBox_regMask_ImgDim->currentIndex();
 
+//    float gridSpcX = nim_input_reg->dx, gridSpcY = nim_input_reg->dy, gridSpcZ = nim_input_reg->dz, gridSpcT = nim_input_reg->dt;
+
+//    qDebug() << "anisotropic data gridSpcX : "<< gridSpcX << "   gridSpcY : "<< gridSpcY << "   gridSpcZ : "<< gridSpcZ << "   gridSpcT : "<< gridSpcT;
+
     if(imgDepth == 1) {
         ui->horizontalSlider_regGridMaskProcImg->setVisible(false);
         ui->horizontalSlider_regGridOrigImg->setVisible(false);
@@ -288,6 +292,19 @@ void RegGridMaskDialog::on_pushButton_regMaskImgSave_clicked()
     if(imgTimeLen != 1) {
         if(ui->lineEdit_regMaskImgName->text().isEmpty()) {
             QMessageBox::warning(this, "Missing Input", "No file name is given");
+        } else {
+            QDir dir("./img-outputs/masks");
+            if (!dir.exists())
+                dir.mkpath(".");
+
+            QString nameStr = "./img-outputs/masks/";
+            nameStr = nameStr + ui->lineEdit_regMaskImgName->text() +  "_" + (ui->lineEdit_regMask_percentage->text()) + "ratio_of_all_pixels" + ".png";
+            isSaved = imageRegMaskObject->save(nameStr, 0, -1);
+        }
+        if(isSaved) {
+            QMessageBox::information(this, "Saved", "The image is saved succesfully!");
+        } else {
+            QMessageBox::warning(this, "Saving Problem", "The image is NOT saved");
         }
     } else {
         if(ui->label_regGridMaskProcImg->pixmap()==0 || ui->lineEdit_regMaskImgName->text().isEmpty()) {

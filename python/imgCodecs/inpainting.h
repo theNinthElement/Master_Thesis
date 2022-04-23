@@ -27,9 +27,25 @@ void linfod_3d_inpainting_FSI(float tol, float timeStepSize, int numSteps, doubl
 //~ Fourth Order Edge Enhancing Anisotropic Diffusion based Inpaiting by Fast Semi-Iterative Scheme with fourth order diffusion tensor
 void foeed_3d_inpainting_FSI(float tol, float timeStep, int numSteps, double* scatImageArr, double* imageArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth, bool zeros2mask);
 
-//***************************************************************************************************************************************************************************************************************************//
 
-void st_eed_4d_inpainting_FSI(float tol, float timeStepSize, int numSteps, double** scatImageArr, double** imageArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth, int imgVolume, float gridSpcX, float gridSpcY, float gridSpcZ, float gridSpct, bool zeros2mask);
+//***************************************************************************************************************************************************************************************************************************//
+void eed_3d_to_4d_old_inpainting_FSI(float tol, float timeStepSize, int numSteps, double* scatImageArr, double* imageArr, double* refImageArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth, float gridSpcX, float gridSpcY, float gridSpcZ, bool zeros2mask);
+
+//***************************************************************************************************************************************************************************************************************************//
+void eed_3d_to_4d_inpainting_FSI(float tol, float timeStepSize, int numSteps, double* scatImageArr, double* imageArr, double* refImageArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth, float gridSpcX, float gridSpcY, float gridSpcZ, bool zeros2mask);
+
+//***************************************************************************************************************************************************************************************************************************//
+void fluctuating_DT_eed_3d_to_4d_inpainting_FSI(float tol, float timeStepSize, int numSteps, double* scatImageArr, double* imageArr, double* refImageArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth, float gridSpcX, float gridSpcY, float gridSpcZ, bool zeros2mask, float beta);
+
+//***************************************************************************************************************************************************************************************************************************//
+void eed_3d_with_temporal_inpainting_FSI(float tol, float timeStepSize, float temporalDiffusion, int numSteps, double* scatImageArr, double* imageArr, double* refImageArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth, float gridSpcX, float gridSpcY, float gridSpcZ, bool zeros2mask, float beta);
+
+//***************************************************************************************************************************************************************************************************************************//
+void foeed_3d_with_temporal_data_inpainting_FSI(float tol, float timeStep, float temporalDiffusion, int numSteps, double* scatImageArr, double* imageArr, double* refImageArr, double* refImageArr2, int* randPxls, int imgWidth, int imgHeight, int imgDepth, bool zeros2mask);
+
+void st_eed_4d_inpainting_FSI(float tol, float timeStepSize, int numSteps, double** scatImageArr, double** imageArr, int** randPxls, int imgWidth, int imgHeight, int imgDepth, int imgVolume, float gridSpcX, float gridSpcY, float gridSpcZ, float gridSpct, bool zeros2mask);
+
+void st_eed_4d_to_4D_inpainting_FSI(float tol, float timeStepSize, int numSteps, double** scatImageArr, double** imageArr, double** refImageArr, int** randPxls, int imgWidth, int imgHeight, int imgDepth, int imgVolume, float gridSpcX, float gridSpcY, float gridSpcZ, float gridSpct, bool zeros2mask);
 
 //~ Fourth Order Edge Enhancing Anisotropic Diffusion based Inpaiting by Fast Semi-Iterative Scheme with fourth order diffusion tensor
 void st_foeed_4d_inpainting_FSI(float tol, float timeStep, int numSteps, double* scatImageArr, double* imageArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth, int imgVolumes, bool zeros2mask);

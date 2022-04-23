@@ -132,8 +132,19 @@ double charbonnier_diff(double s_square, double contrastParam);
 //Perona-Malik diffusivity function
 double pm_diff(double s_square, double contrastParam);
 
+//Aubert diffusivity function
+double aubert_diff(double s_square, double contrastParam);
+
 //Perona-Malik diffusivity function 2
 double pm_diff2(double s_square, double contrastParam);
+
+//Green diffusivity function
+double green_diff(double s_square, double contrastParam);
+
+//Geman et Reynolds
+double gr_diff(double s_square, double contrastParam);
+
+double li1(double s, double contPar);
 
 //Forward sum on x axis.
 double* sumForwX(double* inputAr, int inputArWidth, int inputArHeight);
@@ -237,6 +248,9 @@ double quantlCriterPM4Inpainting(double qntl, double* imgArr, int* randPxls, int
 
 // Calculate Image "qntl" Quantile given in percentage.
 double quantlCriterPM4Inpainting4D(double qntl, double* imgArr, double* binMask, int imgWidth, int imgHeight, int imgDepth, double sigma, int kernelSize);
+
+// Calculate Image "qntl" Quantile given in percentage.
+double* quantlCriterPM4Inpainting4DNoBin(double qntl, double** imgArr, int** randPxls, int imgWidth, int imgHeight, int imgDepth, int imgVolume, double sigma, int kernelSize);
 
 // Calculate Image "qntl" Quantile given in percentage.
 double histoCriterPM4Inpainting(double qntl, double* imgArr, int* randPxls, int imgWidth, int imgHeight, int imgDepth);

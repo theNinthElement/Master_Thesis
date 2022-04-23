@@ -146,6 +146,20 @@
        </layout>
       </item>
       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <item>
+         <widget class="QLabel" name="label_foeedInpt_TD">
+          <property name="text">
+           <string>Temporal Diffusion</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_foeedInpt_TemporalDiffusion"/>
+        </item>
+       </layout>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_foeedInpt_origDataLoad">
         <property name="text">
          <string>Load Original Data</string>
@@ -160,6 +174,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_foeedInpt_loadRefData">
+        <property name="text">
+         <string>Load Ref Image</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_foeedInpt_loadRefData_2">
+        <property name="text">
+         <string>Load Ref Image 2</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_foeedInpt_run">
         <property name="text">
          <string>Run</string>
@@ -170,6 +198,13 @@
        <widget class="QCheckBox" name="checkBox_foeedInpt_monitor">
         <property name="text">
          <string>Motoring</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_foeedInpt_refImageRequired">
+        <property name="text">
+         <string>Ref Image Required</string>
         </property>
        </widget>
       </item>

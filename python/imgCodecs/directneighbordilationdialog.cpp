@@ -187,7 +187,15 @@ void DirectNeighborDilationDialog::on_pushButton_directDilationImgSave_clicked()
 void DirectNeighborDilationDialog::on_pushButton_directDilation_run_clicked()
 {
     int imgWidth, imgHeight, imgDepth, imgTimeLen;
+
     bool excludImg = false;
+
+    if(ui->checkBox_Exclusion->isChecked()) {
+        excludImg = true;
+    } else {
+        excludImg = false;
+    }
+//    bool excludImg = false;
 
     if(ui->label_directDilationOrigImg->pixmap()==0 //.isNull()
             || ui->label_directDilationMaskImg->pixmap()==0) //.isNull())

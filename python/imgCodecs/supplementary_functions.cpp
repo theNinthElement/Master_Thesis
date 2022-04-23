@@ -207,11 +207,43 @@ double** nii4d_to_array(nifti_image *nim_input)
     // Get dimensions of input
     int sizeSlice = nim_input->nz, sizePhase = nim_input->nx, sizeRead = nim_input->ny, nrep =  nim_input->nt;
     int nx =  nim_input->nx, nxy = nim_input->nx * nim_input->ny, nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
+    int dataType = nim_input->datatype;
 
     // Get access to data of nim_input
-    float  *nim_input_data = (float *) nim_input->data;
+    if(dataType == 0) {
+        qDebug() << "Unknown datatype!";
+        return 0;
+    } else if(dataType == 1) {
+        qDebug() << "Datatype: Bool (1 bit)";
+//        bool *nim_input_data = (bool *) nim_input->data;
+    } else if(dataType == 2) {
+        qDebug() << "Datatype: Unsigned Char (8 bits)";
+//        unsigned char *nim_input_data = (unsigned char *) nim_input->data;
+    } else if(dataType == 4) {
+        qDebug() << "Datatype: Signed Short (16 bits)";
+//        signed short *nim_input_data = (signed short *) nim_input->data;
+    } else if(dataType == 8) {
+        qDebug() << "Datatype: Signed Int (32 bits)";
+//        signed int *nim_input_data = (signed int *) nim_input->data;
+    } else if(dataType == 16) {
+        qDebug() << "Datatype: Float (32 bits)";
+//        float *nim_input_data = (float *) nim_input->data;
+    } else if(dataType == 64) {
+        qDebug() << "Datatype: Double (64 bits)";
+//        double *nim_input_data = (double *) nim_input->data;
+    } else if(dataType == 256) {
+        qDebug() << "Datatype: Signed Char (8 bits)";
+//        signed char *nim_input_data = (signed char *) nim_input->data;
+    } else if(dataType == 512) {
+        qDebug() << "Datatype: Unsigned Short (16 bits)";
+//        unsigned short *nim_input_data = (unsigned short *) nim_input->data;
+    } else if(dataType == 768) {
+        qDebug() << "Datatype: Unsigned Int (32 bits)";
+//        unsigned int *nim_input_data = (unsigned int *) nim_input->data;
+    }
 //    double *nim_input_data = (double *) nim_input->data;
 //    short int *nim_input_data = (short int *) nim_input->data;
+    unsigned short *nim_input_data = (unsigned short *) nim_input->data;
 
     qDebug() << " nii4d_ convertion for nrep : " << nrep;
     qDebug() << " nii4d_ convertion for sizeSlice : " << sizeSlice;
@@ -224,7 +256,7 @@ double** nii4d_to_array(nifti_image *nim_input)
                 for(int ix=0; ix<sizePhase; ++ix) {
  //                    float tempValu = *(nim_input_data + nxyz*timestep + nxy*islice + nx*ix + iy);
  //                    short int tempValu = *(nim_input_data + nxyz*timestep + nxy*islice + nx*iy + ix);
-                    float tempValu = nim_input_data[nxyz*timestep + nxy*islice + nx*iy + ix];
+                    unsigned short tempValu = nim_input_data[nxyz*timestep + nxy*islice + nx*iy + ix];
 //                    double tempValu = nim_input_data[nxyz*timestep + nxy*islice + nx*iy + ix];                        //Depending on the nii voxel datatype shoul be chanched.
 //                    short int tempValu = nim_input_data[nxyz*timestep + nxy*islice + nx*iy + ix];
  //                    imageArr[counter] = (double)tempValu;
@@ -911,6 +943,7 @@ double** convolution3DX_of_4D(double** inputAr, int timeLen, int inputArWidth, i
         convolvedArr[i] = new double[sizeof(double)*len];
     }
 
+    qDebug() << " timeLen " << timeLen;
     for(int t=0; t<timeLen; t++) {
         // find center position of kernel (half of kernel size)
         kCenter = kernelLength >> 1;                          // center index of kernel array
@@ -969,7 +1002,9 @@ double** convolution3DX_of_4D(double** inputAr, int timeLen, int inputArWidth, i
                 inputArrIndex += kCenter;                           // next row
             }
         }
+//        qDebug() << " works fine for volume " << t;
     }
+    qDebug() << " so far so good ";
     return convolvedArr;
 }
 
@@ -1482,7 +1517,7 @@ double** convolution3DZ_of_4D(double** inputAr, int timeLen, int inputArWidth, i
 
 //T direction convolution for 3D image.
 double** convolution3DT_of_4D(double** inputAr, int timeLen, int inputArWidth, int inputArHeight, int inputArDepth, double gKernelY[], int kernelLength) {
-    double sum[inputArWidth];
+    double sum[timeLen];
     int i, j, k, n, len, z;
     int kCenter, kOffset, endIndex;                 // kernel indice
 
@@ -1496,7 +1531,7 @@ double** convolution3DT_of_4D(double** inputAr, int timeLen, int inputArWidth, i
 
     for(int t=0; t<inputArWidth; t++) {
         // clear out array before accumulation
-        for(i = 0; i < inputArWidth; ++i)
+        for(i = 0; i < timeLen; ++i)
             sum[i] = 0;
 
         // find center position of kernel (half of kernel size)
@@ -1522,7 +1557,9 @@ double** convolution3DT_of_4D(double** inputAr, int timeLen, int inputArWidth, i
                 {
                     for(j=0; j < timeLen; ++j)
                     {
-                        sum[j] += inputAr[inputArrIndex][t + z*inputArWidth*inputArHeight] * gKernelY[k];
+//                        qDebug() << " inputArrIndex " <<  inputArrIndex << " t  " <<  t << "  z" << z << "  K "<< k << "  j "<< j;
+//                        qDebug() << inputAr[inputArrIndex][t + z*inputArWidth*inputArHeight] << "   "<< gKernelY[k];
+                        sum[j] += inputAr[j][t + z*inputArWidth*inputArHeight] * gKernelY[k];
                         ++inputArrIndex;
                     }
                 }
@@ -1535,6 +1572,7 @@ double** convolution3DT_of_4D(double** inputAr, int timeLen, int inputArWidth, i
                 inputArrIndex = currentVolNumber;                           // reset input array index
                 ++kOffset;                                                  // increase starting index of kernel
             }
+//            qDebug() << "0 to kcenter done for ";
             // ROW FROM index=kCenter TO index=(inputArHeight-kCenter-1)
             for(i = kCenter; i < endIndex; ++i)
             {
@@ -1542,7 +1580,7 @@ double** convolution3DT_of_4D(double** inputAr, int timeLen, int inputArWidth, i
                 {
                     for(j = 0; j < timeLen; ++j)
                     {
-                        sum[j] += inputAr[inputArrIndex][t + z*inputArWidth*inputArHeight] * gKernelY[k];
+                        sum[j] += inputAr[j][t + z*inputArWidth*inputArHeight] * gKernelY[k];
                         ++inputArrIndex;
                     }
                 }
@@ -1556,6 +1594,9 @@ double** convolution3DT_of_4D(double** inputAr, int timeLen, int inputArWidth, i
                 currentVolNumber += inputArWidth;                // move to next row
                 inputArrIndex = currentVolNumber;                           // reset input array index
             }
+
+//            qDebug() << "kcenter to endIndex done for ";
+
             // ROW FROM index=(inputArHeight-kCenter) TO index=(inputArHeight-1)
             kOffset = 1;                                    // ending index of partial kernel varies for each sample
             for(i=endIndex; i < inputArHeight; ++i)
@@ -1579,6 +1620,7 @@ double** convolution3DT_of_4D(double** inputAr, int timeLen, int inputArWidth, i
                 inputArrIndex = currentVolNumber;              // move to next row
                 ++kOffset;                                  // increase ending index of kernel
             }
+//            qDebug() << "end index to height done ";
         }
     }
     return convolvedArr;
@@ -1829,16 +1871,25 @@ double l2Norm(double* imageArray1, double* imageArray2, int imageArrayLen) {
 
 //Discrete l2 norm for 4D (2D(time+data) array) data
 double l2Norm_4D(double** imageArray1, double** imageArray2, int timeLen, int imageArrayLen) {
-    double sum_sq = 0;
+    double total_sum = 0;
+    double* sum_sq = new double[sizeof (double)*timeLen];
+    for(int t=0; t<timeLen; t++) {
+        sum_sq[t] = 0;
+    }
     double l2norm;
+
+
 
     for(int t=0; t<timeLen; t++) {
         for (int i = 0; i < imageArrayLen; ++i) {
             double err = imageArray1[t][i] - imageArray2[t][i];
-            sum_sq += (err * err);
+            sum_sq[t] += (err * err);
         }
+        qDebug() << "l2Norm for volume " << t << "  " << sqrt(sum_sq[t]);
+        total_sum += sum_sq[t];
     }
-    l2norm = sqrt(sum_sq);
+
+    l2norm = sqrt(total_sum);
 
     return l2norm;
 }
@@ -3006,22 +3057,6 @@ double quantlCriterPM4Inpainting(double qntl, double* imgArr, int* randPxls, int
     }
     std::sort(convGradMag.begin(), convGradMag.end());
 
-//    //Write grad. magnitudes to file
-//    QFile file("./img-outputs/masks/grad_magnitudes");
-//    if(!file.open(QFile::WriteOnly | QFile::Text)) {
-//        qDebug("Error", "File is NOT open");
-//    }
-//    QByteArray temp;
-//    for(int i=0; i<convGradMag.size(); i++) {
-//        char buf[9];
-//        ::sprintf(buf, "%d", (int)round(convGradMag[i]));
-//        temp.append(buf);
-//        temp.append("\n");
-//    }
-//    file.write(temp);
-//    file.flush();
-//    file.close();
-
     qntlIndex = ceil(qntl*convGradMag.size()/100);
 
 //    qDebug() << convGradMag.size();
@@ -3040,6 +3075,109 @@ double quantlCriterPM4Inpainting(double qntl, double* imgArr, int* randPxls, int
     dervZConv = NULL;
 
     return convGradMag[qntlIndex];
+}
+
+// Calculate Image "qntl" Quantile given in percentage.
+double* quantlCriterPM4Inpainting4DNoBin(double qntl, double** imgArr, int** randPxls, int imgWidth, int imgHeight, int imgDepth, int imgVolume, double sigma, int kernelSize) {
+    int qntlIndex;
+    double gausKernel[kernelSize];
+    double* *outConvX = new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        outConvX[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+    double* *outConvXY= new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        outConvXY[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+    double* *outConvXYZ = new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        outConvXYZ[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+    double* *outConvXYZT = new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        outConvXYZT[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+    double* *dervXConv = new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        dervXConv[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+    double* *dervYConv = new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        dervYConv[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+    double* *dervZConv = new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        dervZConv[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+    double* *dervTConv = new double*[sizeof(double)*imgVolume];
+    for(int i = 0; i < imgVolume; i++) {
+        dervTConv[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
+    }
+//    std::vector<double> convGradMag;
+    double* convGradMagFinal = new double[sizeof(double)*imgVolume];
+
+    gaussian1D_kernel(gausKernel,kernelSize,sigma);                             // Calculate the Gaussian kernel with sigma variance and size of kernelSize.
+
+    qDebug() << "calculated gaussian1D_kernel";
+
+    outConvX = convolution3DX_of_4D(imgArr, imgVolume, imgWidth, imgHeight, imgDepth, gausKernel, kernelSize);     // Calculate the convolution on x axis.
+//    qDebug() << "convolution3DX_of_4D";
+    outConvXY = convolution3DY_of_4D(outConvX, imgVolume, imgWidth, imgHeight, imgDepth, gausKernel, kernelSize);        // Calculate the convolution on y axis after x axis.
+//    qDebug() << "convolution3DY_of_4D";
+    outConvXYZ = convolution3DZ_of_4D(outConvXY, imgVolume, imgWidth, imgHeight, imgDepth, gausKernel, kernelSize);      // Calculate the convolution on z axis after x and y axis.
+//    qDebug() << "convolution3DZ_of_4D";
+    outConvXYZT = convolution3DT_of_4D(outConvXY, imgVolume, imgWidth, imgHeight, imgDepth, gausKernel, kernelSize);      // Calculate the convolution on z axis after x and y and z axis.
+
+//    qDebug() << "calculated Convolution";
+
+    //First convolved derivatives
+    dervXConv = derivative4DX(outConvXYZT,imgWidth,imgHeight,imgDepth, imgVolume, 1);                         // Derivative of convolved image w.r.t. x.
+//    qDebug() << "derivative4DX";
+    dervYConv = derivative4DY(outConvXYZT,imgWidth,imgHeight,imgDepth, imgVolume,1);                         // Derivative of convolved image w.r.t. y.
+//    qDebug() << "derivative4DY";
+    dervZConv = derivative4DZ(outConvXYZT,imgWidth,imgHeight,imgDepth, imgVolume,1);                         // Derivative of convolved image w.r.t. z.
+//    qDebug() << "derivative4DZ";
+    dervTConv = derivative4DT(outConvXYZT,imgWidth,imgHeight,imgDepth, imgVolume,1);                         // Derivative of convolved image w.r.t. t.
+//    qDebug() << "derivative4DT";
+
+//    qDebug() << "calculated derivative";
+
+    int randArrTraceIndex = 0;
+    for (int v = 0; v<imgVolume;v++) {
+        std::vector<double> convGradMag;
+        for(int i=0; i<imgWidth*imgHeight*imgDepth; i++) {
+            if(i == randPxls[v][randArrTraceIndex]) {
+                randArrTraceIndex++;
+                continue;
+            }
+            //Calculate the convolved gradients.
+//            qDebug() << "norm i  " << i << "v" << v;
+            double norm_i_square = dervXConv[v][i]*dervXConv[v][i] + dervYConv[v][i]*dervYConv[v][i] +
+                    dervZConv[v][i]*dervZConv[v][i] + dervTConv[v][i]*dervTConv[v][i], normi = sqrt(norm_i_square);
+//            qDebug() << "convGradMag  " << i << "v" << v;
+            convGradMag.push_back(normi);
+        }
+//        qDebug() << "calculated convGradMag for " << v;
+        std::sort(convGradMag.begin(), convGradMag.end());
+        qntlIndex = ceil(qntl*convGradMag.size()/100);
+        convGradMagFinal[v] = convGradMag[qntlIndex];
+    }
+//    qDebug() << convGradMag.size();
+
+    delete [] outConvX;
+    outConvX = NULL;
+    delete [] outConvXY;
+    outConvXY = NULL;
+    delete [] outConvXYZ;
+    outConvXYZ = NULL;
+    delete [] dervXConv;
+    dervXConv = NULL;
+    delete [] dervYConv;
+    dervYConv = NULL;
+    delete [] dervZConv;
+    dervZConv = NULL;
+
+    return convGradMagFinal;
 }
 
 // Calculate Image "qntl" Quantile given in percentage.

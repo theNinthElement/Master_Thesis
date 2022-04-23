@@ -25,6 +25,8 @@ private Q_SLOTS:
 
     void on_pushButton_eedInpaintUplImg_clicked();
 
+    void on_pushButton_eedInpaintUplRefImg_clicked();
+
     void on_pushButton_eedInpaintUplMask_clicked();
 
     void on_pushButton_eedInpaintRun_clicked();
@@ -38,7 +40,7 @@ private:
     QImage  *imageObject;
     QImage  *maskImageObject;
     QStringList randPxlStrArr, eigVals, eigVecs;
-    nifti_image *nim_input, *nim_input_mask, *nim_dti;
+    nifti_image *nim_input, *nim_input_mask, *nim_dti, *nim_input_ref;
 //    QVector<double> eigVecs;
 };
 

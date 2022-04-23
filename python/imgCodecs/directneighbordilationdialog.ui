@@ -124,6 +124,13 @@
        </spacer>
       </item>
       <item>
+       <widget class="QCheckBox" name="checkBox_Exclusion">
+        <property name="text">
+         <string>Exclusion</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="Line" name="line">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>

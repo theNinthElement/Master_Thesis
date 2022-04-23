@@ -111,9 +111,11 @@ double* regGridPixelsVolum(int samplingSize, double imgWid, double imgHei, doubl
 double** regGridPixelsVolum_4D(int samplingSize, int imgWid, int imgHei, int imgDep, int imgTime)
 {
     // Decleartion and memory allocation
+    int length;
+    length = (int)(ceil(imgWid/samplingSize)*ceil(imgHei/samplingSize)*ceil(imgDep/samplingSize));
     double** regGridBinMask = new double*[sizeof(double)*imgTime];
     for(int i = 0; i < imgTime; ++i) {
-        regGridBinMask[i] = new double[sizeof(double)*imgWid*imgHei*imgDep];
+        regGridBinMask[i] = new double[sizeof(double)*length];
     }
     for(int i = 0; i < imgTime; ++i) {
         for(int j=0; j<imgWid*imgHei*imgDep; j++) {

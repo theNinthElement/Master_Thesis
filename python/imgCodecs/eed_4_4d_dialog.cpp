@@ -130,7 +130,7 @@ void EED_4_4D_Dialog::on_pushButton_eed44dInpaintUplImg_clicked()
 void EED_4_4D_Dialog::on_pushButton_eed44dInpaintUplMask_clicked()
 {
     QString imageDataPath = QFileDialog::getOpenFileName(this,tr("Open File"),"",tr("NIfTI (*.nii)" ));
-
+//    qDebug() << "passed 1";
     //***************************************************
     //Convert QString to char*
     QByteArray baTemp = imageDataPath.toLocal8Bit();
@@ -148,14 +148,36 @@ void EED_4_4D_Dialog::on_pushButton_eed44dInpaintUplMask_clicked()
     if(!file.open(QFile::ReadOnly | QFile::Text)) {
         QMessageBox::warning(this, "Error", "File is NOT open.");
     }
-    QString arr= file.readAll();
-    randPxlStrArr = arr.split('\n');
-    file.close();
+//    qDebug() << "passed 2";
+
 //    //***************************************************
     int imgWidth = nim_input_mask->dim[1];
     int imgHeight = nim_input_mask->dim[2];
-//    int imgDepth = nim_input_mask->dim[3];
+    int imgDepth = nim_input_mask->dim[3];
     int imgTimeLen = nim_input_mask->dim[4];
+
+    randPxlStrArr4D = new QStringList[sizeof(QStringList)*imgTimeLen];
+
+    if(imgTimeLen > 1)
+    {
+        QString arr= file.readAll();
+        QString s;
+        for(int t = 0; t< imgTimeLen; t++) {
+//            randPxlStrArr4D[t] = new QStringList[sizeof(QStringList)];
+            s = arr.split("####")[t];
+//            qDebug() << s.length();
+            randPxlStrArr4D[t] = s.split('\n');
+//            qDebug() << "passed 3";
+        }
+        file.close();
+    } else
+    {
+        QString arr= file.readAll();
+        randPxlStrArr = arr.split('\n');
+        file.close();
+    }
+
+//    qDebug() << "passed 3";
 
     qDebug() << "Fourth Dimension Length: " << imgTimeLen;
 
@@ -268,12 +290,19 @@ void EED_4_4D_Dialog::on_pushButton_eed44dInpaintRun_clicked()
                 inpaintedImageArr[i] = new double[sizeof(double)*imgWidth*imgHeight*imgDepth];
             }
 
+
             // Decleartion and memory allocation
-            int* randPxls = new int[sizeof(int) * (randPxlStrArr.size()-1)];
-            for(int i=0; i<randPxlStrArr.size()-1; i++) {
-                QString temp = randPxlStrArr[i];
-                randPxls[i] = temp.toInt();
+            int** randPxls = new int*[sizeof(int) * imgTimeLen];
+            for (int i = 0; i < imgTimeLen; i++) {
+                randPxls [i] = new int[sizeof(int) * (randPxlStrArr4D[i].size()-1)];
             }
+            for (int t = 0; t < imgTimeLen; t++) {
+                for(int i=0; i<randPxlStrArr4D[t].size()-1; i++) {
+                    QString temp = randPxlStrArr4D[t][i];
+                    randPxls[t][i] = temp.toInt();
+               }
+            }
+
             imageArr = nii4d_to_array(nim_input);
 //            scatImageArr = nii4d_to_array_mask(nim_input_mask);
             scatImageArr = nii4d_to_array(nim_input_mask);
@@ -309,290 +338,6 @@ void EED_4_4D_Dialog::on_pushButton_eed44dInpaintRun_clicked()
                         }
                     }
                 }
-
-//                //Initialize mask image with zeros  *************************************************************************************
-//                for(int i = 0; i < imgTimeLen; ++i) {
-//                    for(int j=0; j<imgWidth*imgHeight*imgDepth; j++) {
-//                        inpaintedImageArr[i][j] = imageArr[i][j];
-//                        scatImageArr[i][j] = 0;
-
-//                        binInpaintingMaskArr[i][j] = 0;
-//                    }
-//                }
-//                //Dropout simulation by random volume and slice (axial) selection  ******************************************************
-//                srand(10);
-//                int volNum = 49;
-//                for(int k=0; k<volNum; k++) {
-//                    bool randomVol_in_b0 = false;
-//                    int randomVol = (rand() % imgTimeLen);
-
-//                    if(randomVol == 0) {
-//                        randomVol_in_b0 = true;              // B=0 volume
-//                    } else if(randomVol == 21) {
-//                        randomVol_in_b0 = true;              // B=0 volume
-//                    } else if(randomVol == 42) {
-//                        randomVol_in_b0 = true;              // B=0 volume
-//                    } else if(randomVol == 63) {
-//                        randomVol_in_b0 = true;              // B=0 volume
-//                    } else if(randomVol == 84) {
-//                        randomVol_in_b0 = true;              // B=0 volume
-//                    }
-
-//                    while(randomVol_in_b0) {
-//                        randomVol = (rand() % imgTimeLen);
-
-//                        if(randomVol == 0) {
-//                            randomVol_in_b0 = true;              // B=0 volume
-//                        } else if(randomVol == 21) {
-//                            randomVol_in_b0 = true;              // B=0 volume
-//                        } else if(randomVol == 42) {
-//                            randomVol_in_b0 = true;              // B=0 volume
-//                        } else if(randomVol == 63) {
-//                            randomVol_in_b0 = true;              // B=0 volume
-//                        } else if(randomVol == 84) {
-//                            randomVol_in_b0 = true;              // B=0 volume
-//                        } else {
-//                            randomVol_in_b0 = false;              // B=0 volume
-//                        }
-//                    }
-
-//                    int numSlice = 40;
-// //                    int randomSlice = (rand() % imgDepth);
-//                    qDebug() << "Random selected volume: " << randomVol << " Random selected slice: " << numSlice;
-
-//                    for(int i=0; i<imgWidth*imgHeight; i++) {
-//                        inpaintedImageArr[randomVol][numSlice*imgWidth*imgHeight+i] = inpaintedImageArr[randomVol][numSlice*imgWidth*imgHeight+i]*0.3;
-//                        scatImageArr[randomVol][numSlice*imgWidth*imgHeight+i] = 1;
-
-//                        binInpaintingMaskArr[randomVol][numSlice*imgWidth*imgHeight+i] = 1;
-//                    }
-//                }
-//                // **********************************************************************************************************************
-//                for(int i = 0; i < imgTimeLen; ++i) {
-//                    for(int j=0; j<imgWidth*imgHeight*imgDepth; j++) {
-//                        int tempIndx = (int)binInpaintingMaskArr[i][j];
-//                        if(tempIndx == 1) {
-// //                            inpaintedImageArr[i][j] = scatImageArr[i][j];
-// //                            inpaintedImageArr[i][j] = imageArr[i][j];
-//                             inpaintedImageArr[i][j] = -1.0;
-//                        } else {
-// //                            inpaintedImageArr[i][j] = imageArr[i][j];
-//                             inpaintedImageArr[i][j] = 0.0;
-//                        }
-//                    }
-//                }
-
-
-
-
-
-//                double** testImg = new double*[sizeof(double)*4];
-//                for(int i = 0; i < imgTimeLen; ++i) {
-//                    testImg[i] = new double[sizeof(double)*4*4*4];
-//                }
-//                testImg[0][0] = 10;
-//                testImg[0][1] = 8;
-//                testImg[0][2] = 6;
-//                testImg[0][3] = 3;
-//                testImg[0][4] = 7;
-//                testImg[0][5] = 9;
-//                testImg[0][6] = 6;
-//                testImg[0][7] = 7;
-//                testImg[0][8] = 1;
-//                testImg[0][9] = 0;
-//                testImg[0][10] = 0;
-//                testImg[0][11] = 0;
-//                testImg[0][12] = 0;
-//                testImg[0][13] = 0;
-//                testImg[0][14] = 2;
-//                testImg[0][15] = 1;
-//                testImg[0][16] = 2;
-//                testImg[0][17] = 3;
-//                testImg[0][18] = 4;
-//                testImg[0][19] = 5;
-//                testImg[0][20] = 2;
-//                testImg[0][21] = 3;
-//                testImg[0][22] = 4;
-//                testImg[0][23] = 5;
-//                testImg[0][24] = 5;
-//                testImg[0][25] = 1;
-//                testImg[0][26] = 2;
-//                testImg[0][27] = 1;
-//                testImg[0][28] = 2;
-//                testImg[0][29] = 6;
-//                testImg[0][30] = 7;
-//                testImg[0][31] = 8;
-//                testImg[0][32] = 9;
-//                testImg[0][33] = 10;
-//                testImg[0][34] = 11;
-//                testImg[0][35] = 14;
-//                testImg[0][36] = 18;
-//                testImg[0][37] = 16;
-//                testImg[0][38] = 13;
-//                testImg[0][39] = 17;
-//                testImg[0][40] = 19;
-//                testImg[0][41] = 16;
-//                testImg[0][42] = 17;
-//                testImg[0][43] = 11;
-//                testImg[0][44] = 10;
-//                testImg[0][45] = 10;
-//                testImg[0][46] = 10;
-//                testImg[0][47] = 10;
-//                testImg[0][48] = 20;
-//                testImg[0][49] = 22;
-//                testImg[0][50] = 21;
-//                testImg[0][51] = 12;
-//                testImg[0][52] = 13;
-//                testImg[0][53] = 14;
-//                testImg[0][54] = 15;
-//                testImg[0][55] = 12;
-//                testImg[0][56] = 13;
-//                testImg[0][57] = 14;
-//                testImg[0][58] = 15;
-//                testImg[0][59] = 15;
-//                testImg[0][60] = 11;
-//                testImg[0][61] = 12;
-//                testImg[0][62] = 11;
-//                testImg[0][63] = 12;
-
-//                testImg[1][0] = 18;
-//                testImg[1][1] = 8;
-//                testImg[1][2] = 6;
-//                testImg[1][3] = 3;
-//                testImg[1][4] = 7;
-//                testImg[1][5] = 9;
-//                testImg[1][6] = 6;
-//                testImg[1][7] = 7;
-//                testImg[1][8] = 1;
-//                testImg[1][9] = 0;
-//                testImg[1][10] = 0;
-//                testImg[1][11] = 0;
-//                testImg[1][12] = 0;
-//                testImg[1][13] = 0;
-//                testImg[1][14] = 2;
-//                testImg[1][15] = 1;
-//                testImg[1][16] = 2;
-//                testImg[1][17] = 3;
-//                testImg[1][18] = 4;
-//                testImg[1][19] = 5;
-//                testImg[1][20] = 2;
-//                testImg[1][21] = 3;
-//                testImg[1][22] = 4;
-//                testImg[1][23] = 5;
-//                testImg[1][24] = 5;
-//                testImg[1][25] = 1;
-//                testImg[1][26] = 2;
-//                testImg[1][27] = 1;
-//                testImg[1][28] = 2;
-//                testImg[1][29] = 6;
-//                testImg[1][30] = 7;
-//                testImg[1][31] = 8;
-//                testImg[1][32] = 9;
-//                testImg[1][33] = 10;
-//                testImg[1][34] = 11;
-//                testImg[1][35] = 14;
-//                testImg[1][36] = 18;
-//                testImg[1][37] = 16;
-//                testImg[1][38] = 13;
-//                testImg[1][39] = 17;
-//                testImg[1][40] = 19;
-//                testImg[1][41] = 16;
-//                testImg[1][42] = 17;
-//                testImg[1][43] = 11;
-//                testImg[1][44] = 10;
-//                testImg[1][45] = 10;
-//                testImg[1][46] = 10;
-//                testImg[1][47] = 10;
-//                testImg[1][48] = 20;
-//                testImg[1][49] = 22;
-//                testImg[1][50] = 21;
-//                testImg[1][51] = 12;
-//                testImg[1][52] = 13;
-//                testImg[1][53] = 14;
-//                testImg[1][54] = 15;
-//                testImg[1][55] = 12;
-//                testImg[1][56] = 13;
-//                testImg[1][57] = 14;
-//                testImg[1][58] = 15;
-//                testImg[1][59] = 15;
-//                testImg[1][60] = 11;
-//                testImg[1][61] = 12;
-//                testImg[1][62] = 11;
-//                testImg[1][63] = 12;
-
-//                testImg[2][0] = 18;
-//                testImg[2][1] = 16;
-//                testImg[2][2] = 13;
-//                testImg[2][3] = 17;
-//                testImg[2][4] = 19;
-//                testImg[2][5] = 16;
-//                testImg[2][6] = 17;
-//                testImg[2][7] = 11;
-//                testImg[2][8] = 10;
-//                testImg[2][9] = 10;
-//                testImg[2][10] = 10;
-//                testImg[2][11] = 10;
-//                testImg[2][12] = 20;
-//                testImg[2][13] = 22;
-//                testImg[2][14] = 21;
-//                testImg[2][15] = 12;
-//                testImg[2][16] = 13;
-//                testImg[2][17] = 14;
-//                testImg[2][18] = 15;
-//                testImg[2][19] = 12;
-//                testImg[2][20] = 13;
-//                testImg[2][21] = 14;
-//                testImg[2][22] = 15;
-//                testImg[2][23] = 15;
-//                testImg[2][24] = 11;
-//                testImg[2][25] = 12;
-//                testImg[2][26] = 11;
-//                testImg[2][27] = 12;
-//                testImg[2][28] = 14;
-//                testImg[2][29] = 15;
-//                testImg[2][30] = 15;
-//                testImg[2][31] = 11;
-//                testImg[2][32] = 12;
-//                testImg[2][33] = 11;
-//                testImg[2][34] = 12;
-//                testImg[2][35] = 18;
-//                testImg[2][36] = 16;
-//                testImg[2][37] = 13;
-//                testImg[2][38] = 17;
-//                testImg[2][39] = 19;
-//                testImg[2][40] = 16;
-//                testImg[2][41] = 17;
-//                testImg[2][42] = 11;
-//                testImg[2][43] = 10;
-//                testImg[2][44] = 10;
-//                testImg[2][45] = 10;
-//                testImg[2][46] = 10;
-//                testImg[2][47] = 18;
-//                testImg[2][48] = 16;
-//                testImg[2][49] = 13;
-//                testImg[2][50] = 17;
-//                testImg[2][51] = 19;
-//                testImg[2][52] = 16;
-//                testImg[2][53] = 17;
-//                testImg[2][54] = 11;
-//                testImg[2][55] = 10;
-//                testImg[2][56] = 10;
-//                testImg[2][57] = 10;
-//                testImg[2][58] = 10;
-//                testImg[2][59] = 19;
-//                testImg[2][60] = 16;
-//                testImg[2][61] = 17;
-//                testImg[2][62] = 11;
-//                testImg[2][63] = 10;
-//                eed_with_qSpace_4d_signalDropoutImputation_FSI(tol,timeStep,innerLoopSize,testImg,testImg,testImg,testImg,4,4,4,2,1,1,1);
-
-//                double *ssdYConv = ssd_4DZ_central(testImg,3,4,4,4);                                        // Derivative of convolved image w.r.t. x.
-//                for(int i=0; i<4*4*4; i++) {
-//                    qDebug() << i << ssdYConv[i];
-//                }
-
-
-
                 qDebug() << "4D EED FSI\n";
                 qDebug() << gridSpcX << gridSpcY << gridSpcZ << gridSpcT;
                 qDebug() << imgWidth << imgHeight << imgDepth << imgTimeLen;
@@ -603,7 +348,8 @@ void EED_4_4D_Dialog::on_pushButton_eed44dInpaintRun_clicked()
 //                eed_4d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, inpaintedImageArr, imgWidth, imgHeight, imgDepth, imgTimeLen, gridSpcX, gridSpcY, gridSpcZ);
 //                foeed_4d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, inpaintedImageArr, imgWidth, imgHeight, imgDepth, imgTimeLen, gridSpcX, gridSpcY, gridSpcZ);
 //                linear_4d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, inpaintedImageArr, imgWidth, imgHeight, imgDepth, imgTimeLen, gridSpcX, gridSpcY, gridSpcZ);
-                st_eed_4d_inpainting_FSI(tol, timeStep, innerLoopSize, binInpaintingMaskArr, imageArr, randPxls, imgWidth, imgHeight, imgDepth, imgTimeLen, gridSpcX, gridSpcY, gridSpcZ, gridSpcT, false);
+//                st_eed_4d_inpainting_FSI(tol, timeStep, innerLoopSize, binInpaintingMaskArr, imageArr, randPxls, imgWidth, imgHeight, imgDepth, imgTimeLen, gridSpcX, gridSpcY, gridSpcZ, gridSpcT, true);
+//                eed_3d_to_4d_inpainting_FSI(tol, timeStep, innerLoopSize, scatImageArr, imageArr, refImageArr, randPxls, imgWidth, imgHeight, imgDepth, gridSpcX, gridSpcY, gridSpcZ, true);
             }
 
 //            //Slice MSE and AAE***************************************************************************

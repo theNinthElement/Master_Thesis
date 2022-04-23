@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <cmath>
 
 //Spatial second central derivative on x axis.
 double* derivativeXX(double* inputAr, int inputArWidth, int inputArHeight, int stepSize) {
@@ -172,6 +173,8 @@ double* derivative3DX(double* inputAr, int inputArWidth, int inputArHeight, int 
     // Decleartion and memory allocation
     double* outAr = new double[sizeof(double) * len];
 
+//    qDebug() << "stepsize" << stepSize;
+
     for(int d=0; d<inputArDepth; d++) {
         int dlen = d*inputArWidth*inputArHeight;
         int slen = inputArWidth*inputArHeight;
@@ -185,6 +188,11 @@ double* derivative3DX(double* inputAr, int inputArWidth, int inputArHeight, int 
             outAr[k*inputArWidth+dlen] = (inputAr[k*inputArWidth+1+dlen]-inputAr[k*inputArWidth+dlen])/(2*stepSize);
             outAr[(k+1)*inputArWidth-1+dlen] = (inputAr[(k+1)*inputArWidth-1+dlen]-inputAr[(k+1)*inputArWidth-2+dlen])/(2*stepSize);
 //            outAr[(k+1)*inputArWidth-1+dlen] = (inputAr[(k+1)*inputArWidth-2+dlen]-inputAr[(k+1)*inputArWidth-1+dlen])/(2*stepSize);
+
+//            if(outAr[k*inputArWidth+dlen] != outAr[k*inputArWidth+dlen]) {
+//                qDebug() << "it is nan here"  ;
+
+//            }
         }
     }
     return outAr;   //when it is displayed, array should be scaled to (0,255) from (-128,128) for derivatives
@@ -198,16 +206,18 @@ double** derivative4DX(double** inputAr, int inputArWidth, int inputArHeight, in
     double** outAr = new double*[sizeof(double)*inputArVolume];
     for (int i = 0; i < inputArVolume; i++)
     {
-        *outAr = new double[sizeof (double) * len];
+        outAr[i] = new double[sizeof (double) * len];
     }
 
-    for (int v = 0; v < inputArVolume; v++){
+    for (int v = 0; v < inputArVolume; v++) {
 
         for(int d=0; d<inputArDepth; d++) {
             int dlen = d*inputArWidth*inputArHeight;
             int slen = inputArWidth*inputArHeight;
 
             for(int i=1; i<(slen-1); i++) {
+//                qDebug() << " Here go 0 " << inputAr[v][i+1+dlen] << i+1+dlen;
+//                qDebug() << " Here go 1  " << inputAr[v][i-1+dlen] << i-1+dlen;
                 outAr[v][i+dlen] = (inputAr[v][i+1+dlen]-inputAr[v][i-1+dlen])/(2*stepSize);
             }
             for(int k=0; k<inputArHeight; k++) {
@@ -218,6 +228,7 @@ double** derivative4DX(double** inputAr, int inputArWidth, int inputArHeight, in
     //            outAr[(k+1)*inputArWidth-1+dlen] = (inputAr[(k+1)*inputArWidth-2+dlen]-inputAr[(k+1)*inputArWidth-1+dlen])/(2*stepSize);
             }
         }
+//        qDebug() << "4dx done for v : " << v;
     }
     return outAr;   //when it is displayed, array should be scaled to (0,255) from (-128,128) for derivatives
 }
@@ -255,7 +266,7 @@ double** derivative4DY(double** inputAr, int inputArWidth, int inputArHeight, in
     // Decleartion and memory allocation
     double** outAr = new double* [sizeof(double) * inputArVolume];
     for (int i = 0; i < inputArVolume; i++) {
-        *outAr = new double[sizeof(double) * len];
+        outAr[i] = new double[sizeof(double) * len];
     }
 
     for (int v = 0; v < inputArVolume; v++) {
@@ -317,7 +328,7 @@ double** derivative4DZ(double** inputAr, int inputArWidth, int inputArHeight, in
     double** outAr = new double*[sizeof(double) * inputArVolume];
     for (int i = 0; i < inputArVolume; i++)
     {
-        *outAr = new double[sizeof(double) * len];
+        outAr[i] = new double[sizeof(double) * len];
     }
 
     for ( int v = 0; v < inputArVolume; v ++)
@@ -347,7 +358,7 @@ double** derivative4DT(double** inputAr, int inputArWidth, int inputArHeight, in
     double** outAr = new double*[sizeof(double) * inputArVolume];
     for (int i = 0; i < inputArVolume; i++)
     {
-        *outAr = new double[sizeof(double) * len];
+        outAr[i] = new double[sizeof(double) * len];
     }
     int v = 0;
     for( int i = 0; i<len; i++){
@@ -376,6 +387,8 @@ double* dervForw3DX(double* inputAr, int inputArWidth, int inputArHeight, int in
     // Decleartion and memory allocation
     double* outAr = new double[sizeof(double) * len];
 
+//    qDebug() << "stepsize at dervForw3DX" << stepSize;
+
     for(int d=0; d<inputArDepth; d++) {
         int slen = inputArWidth*inputArHeight;
 
@@ -384,6 +397,10 @@ double* dervForw3DX(double* inputAr, int inputArWidth, int inputArHeight, int in
                 outAr[i] = 0;
             } else {
                 outAr[i] = (inputAr[i+1]-inputAr[i])/stepSize;
+            }
+            if(outAr[i]!=outAr[i])
+            {
+                qDebug() << "inputAr[i+1]" << inputAr[i+1] << "inputAr[i]" << inputAr[i] << outAr[i];
             }
         }
     }
